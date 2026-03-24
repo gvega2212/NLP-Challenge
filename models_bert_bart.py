@@ -4,6 +4,13 @@
 # Students can mirror these for TinyGPT.
 # ============================================================
 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from core_modules import EncoderBlock, EncoderDecoderBlock
+
+
 class TinyBERT(nn.Module):
     """
     Encoder-only transformer with a classification head.

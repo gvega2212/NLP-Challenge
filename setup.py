@@ -1,10 +1,15 @@
 # ============================================================
 # 00_setup.py
 # Setup utilities, tiny corpus, vocabulary, and train/val split
-# This fragment intentionally contains no import statements.
-# It is designed to be loaded with exec(..., globals()) after the
-# main driver has already imported math, random, torch, nn, F, Optional.
 # ============================================================
+
+import math
+import random
+from typing import Optional
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 SEED = 42
 random.seed(SEED)
@@ -68,11 +73,10 @@ print("Vocabulary:", chars)
 
 # ============================================================
 # Hyperparameters
-# Leave these blank for students.
 # ============================================================
 
-batch_size = 
-context_length = 
-d_model = 
-n_layers = 
-learning_rate = 
+batch_size = 32
+context_length = 64
+d_model = 128
+n_layers = 2
+learning_rate = 1e-3
