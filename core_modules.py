@@ -135,8 +135,8 @@ class DecoderBlock(nn.Module):
         # 3. Apply layer norm before feedforward
         # 4. Add the residual connection
 
-        # x = ...
-        # x = ...
+        x = x + self.self_attn(self.ln1(x))
+        x = x + self.ffwd(self.ln2(x))
         return x
 
 
@@ -167,9 +167,8 @@ class EncoderDecoderBlock(nn.Module):
         # 2. Apply cross-attention using encoder_out as context
         # 3. Apply feedforward with residual connection
 
-        # x = ...
-        # x = ...
-        # x = ...
+        x = x + self.self_attn(self.ln1(x))
+        x = x + self.cross_attn(self.ln2(x), context=encoder_out)
+        x = x + self.ffwd(self.ln3(x))
         return x
     
-    # test
