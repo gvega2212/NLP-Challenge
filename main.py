@@ -20,12 +20,12 @@ def main():
     base = Path(__file__).parent
 
     # Load fragments using path-safe module names.
-    setup = import_module_from_path("setup", base / "00_setup.py")
-    batching = import_module_from_path("batching", base / "01_batching.py")
-    core_modules = import_module_from_path("core_modules", base / "02_core_modules.py")
-    models = import_module_from_path("models_bert_bart", base / "03_models_bert_bart.py")
-    gpt = import_module_from_path("model_gpt_skeleton", base / "04_model_gpt_skeleton.py")
-    training = import_module_from_path("training_utils_and_demos", base / "05_training_utils_and_demos.py")
+    setup = import_module_from_path("setup", base / "setup.py")
+    batching = import_module_from_path("batching", base / "batching.py")
+    core_modules = import_module_from_path("core_modules", base / "core_modules.py")
+    models = import_module_from_path("models_bert_bart", base / "models_bert_bart.py")
+    gpt = import_module_from_path("model_gpt_skeleton", base / "model_gpt_skeleton.py")
+    training = import_module_from_path("training_utils_and_demos", base / "training_utils_and_demos.py")
 
     # Run the demo orchestration function
     training.run_all_demos(steps=20)
