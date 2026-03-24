@@ -52,36 +52,21 @@ class TinyGPT(nn.Module):
         """
         B, T = idx.shape
 
-        # TODO:
-        # 1. Compute token embeddings
-        # 2. Build position indices
-        # 3. Compute positional embeddings
-        # 4. Add token and positional embeddings
-        # 5. Pass through decoder blocks
-        # 6. Apply final layer norm
-        # 7. Project to vocabulary logits
-
-        # tok_emb = ...
-        # pos = ...
-        # pos_emb = ...
-        # x = ...
-        # x = ...
-        # x = ...
-        # logits = ...
+        tok_emb = self.token_embedding(idx)
+        pos = torch.arange(T, device=idx.device)
+        pos_emb = self.position_embedding(pos)
+        x = tok_emb + pos_emb
+        x = self.blocks(x)
+        x = self.ln_f(x)
+        logits = self.lm_head(x)
 
         loss = None
 
         if targets is not None:
-            # TODO:
-            # Flatten logits and targets so they can be used
-            # with cross-entropy for next-token prediction.
-
-            # B, T, V = logits.shape
-            # logits_flat = ...
-            # targets_flat = ...
-            # loss = ...
-
-            pass
+            B, T, V = logits.shape
+            logits_flat = logits.view(B * T, V)
+            targets_flat = targets.view(B * T)
+            loss = F.cross_entropy(logits_flat, targets_flat)
 
         return logits, loss
 
@@ -104,20 +89,11 @@ class TinyGPT(nn.Module):
             Extended sequence
         """
         for _ in range(max_new_tokens):
-            # TODO:
-            # 1. Keep only the last self.context_length tokens
-            # 2. Run the model forward
-            # 3. Keep logits from the last time step
-            # 4. Choose the most probable next token
-            # 5. Append it to idx
-
-            # idx_cond = ...
-            # logits, _ = ...
-            # logits_last = ...
-            # next_token = ...
-            # idx = ...
-
-            pass
+            idx_cond = idx[:, -self.context_length:]
+            logits, _ = self(idx_cond)
+            logits_last = logits[:, -1, :]
+            next_token = logits_last.argmax(dim=-1, keepdim=True)
+            idx = torch.cat([idx, next_token], dim=1)
 
         return idx
 
@@ -129,23 +105,12 @@ class TinyGPT(nn.Module):
         temperature > 1.0 makes output more random.
         """
         for _ in range(max_new_tokens):
-            # TODO:
-            # 1. Keep only the last self.context_length tokens
-            # 2. Run the model forward
-            # 3. Keep logits from the last time step
-            # 4. Divide logits by temperature
-            # 5. Convert to probabilities with softmax
-            # 6. Sample the next token
-            # 7. Append it to idx
-
-            # idx_cond = ...
-            # logits, _ = ...
-            # logits_last = ...
-            # probs = ...
-            # next_token = ...
-            # idx = ...
-
-            pass
+            idx_cond = idx[:, -self.context_length:]
+            logits, _ = self(idx_cond)
+            logits_last = logits[:, -1, :] / temperature
+            probs = F.softmax(logits_last, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1)
+            idx = torch.cat([idx, next_token], dim=1)
 
         return idx
 
@@ -155,28 +120,14 @@ class TinyGPT(nn.Module):
         keep only the k most likely tokens and sample from them.
         """
         for _ in range(max_new_tokens):
-            # TODO:
-            # Suggested steps:
-            # 1. Keep only the last self.context_length tokens
-            # 2. Run the model forward
-            # 3. Keep logits from the last time step and scale by temperature
-            # 4. Extract the top-k logits and indices
-            # 5. Build filtered logits filled with -inf
-            # 6. Put back the top-k values in their original positions
-            # 7. Softmax the filtered logits
-            # 8. Sample the next token
-            # 9. Append it to idx
-
-            # idx_cond = ...
-            # logits, _ = ...
-            # logits_last = ...
-            # topk_vals, topk_idx = ...
-            # filtered_logits = ...
-            # filtered_logits.scatter_(...)
-            # probs = ...
-            # next_token = ...
-            # idx = ...
-
-            pass
+            idx_cond = idx[:, -self.context_length:]
+            logits, _ = self(idx_cond)
+            logits_last = logits[:, -1, :] / temperature
+            topk_vals, topk_idx = torch.topk(logits_last, k, dim=-1)
+            filtered_logits = torch.full_like(logits_last, float("-inf"))
+            filtered_logits.scatter_(1, topk_idx, topk_vals)
+            probs = F.softmax(filtered_logits, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1)
+            idx = torch.cat([idx, next_token], dim=1)
 
         return idx
