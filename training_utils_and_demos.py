@@ -7,6 +7,16 @@
 import torch
 
 from batching import get_classification_batch, get_seq2seq_batch, get_lm_batch
+from setup import (
+    context_length,
+    d_model,
+    decode,
+    device,
+    encode,
+    learning_rate,
+    n_layers,
+    vocab_size,
+)
 from models_bert_bart import TinyBERT, TinyBART
 from model_gpt_skeleton import TinyGPT
 
@@ -133,10 +143,9 @@ def run_bart_demo(steps=101):
 
 def run_gpt_demo(steps=101):
     print("\n" + "=" * 60)
-    print("GPT-LIKE DEMO (placeholder)")
+    print("GPT-LIKE DEMO")
     print("=" * 60)
 
-    # TinyGPT is scaffolded; students can implement training and generation.
     gpt_model = TinyGPT(
         vocab_size=vocab_size,
         d_model=d_model,
@@ -157,7 +166,66 @@ def run_gpt_demo(steps=101):
 
         if step % 50 == 0:
             stats = estimate_gpt_loss(gpt_model, eval_iters=10)
-            print(f"Step {step:3d} | train loss: {stats['train']:.4f} | val loss: {stats['val']:.4f}")
+            print(
+                f"Step {step:3d} | "
+                f"train loss: {stats['train']:.4f} | "
+                f"val loss: {stats['val']:.4f}"
+            )
+
+    stats = estimate_gpt_loss(gpt_model, eval_iters=20)
+    print(
+        f"Final GPT loss | train: {stats['train']:.4f} | "
+        f"val: {stats['val']:.4f}"
+    )
+
+    prompt = "Natural language "
+    idx0 = torch.tensor([encode(prompt)], dtype=torch.long, device=device)
+
+    gpt_model.eval()
+    with torch.no_grad():
+        greedy_ids = gpt_model.generate_greedy(idx0.clone(), max_new_tokens=180)
+        temp_07_ids = gpt_model.generate_temperature(
+            idx0.clone(),
+            max_new_tokens=180,
+            temperature=0.7,
+        )
+        temp_13_ids = gpt_model.generate_temperature(
+            idx0.clone(),
+            max_new_tokens=180,
+            temperature=1.3,
+        )
+        topk_5_ids = gpt_model.generate_top_k(
+            idx0.clone(),
+            max_new_tokens=180,
+            temperature=1.0,
+            k=5,
+        )
+        topk_10_ids = gpt_model.generate_top_k(
+            idx0.clone(),
+            max_new_tokens=180,
+            temperature=1.0,
+            k=10,
+        )
+
+    print("\nPrompt:")
+    print(prompt)
+
+    print("\nGreedy:")
+    print(decode(greedy_ids[0].tolist()))
+
+    print("\nTemperature (0.7):")
+    print(decode(temp_07_ids[0].tolist()))
+
+    print("\nTemperature (1.3):")
+    print(decode(temp_13_ids[0].tolist()))
+
+    print("\nTop-k (k=5):")
+    print(decode(topk_5_ids[0].tolist()))
+
+    print("\nTop-k (k=10):")
+    print(decode(topk_10_ids[0].tolist()))
+
+    gpt_model.train()
 
 
 def run_all_demos(steps=101):
